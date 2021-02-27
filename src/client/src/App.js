@@ -4,6 +4,7 @@ import UserContext from './Contexts/UserContext';
 import Navbar from './Components/Navbar';
 import Games from './Routes/Games';
 import Community from './Routes/Community';
+import Queue from './Routes/Queue';
 import Signup from './Routes/Signup';
 import Signin from './Routes/Signin';
 import Signout from './Routes/Signout';
@@ -56,6 +57,7 @@ function App() {
             <Redirect exact from='/' to='/community' />
             <Route exact path='/community' component={Community} />
             <Route exact path='/games' component={Games} />
+            <Route exact path='/queue' component={Queue} />
             <Route exact path='/signup' component={Signup} />
             <Route exact path='/signin' component={Signin} />
             <Route exact path='/signout' component={Signout} />

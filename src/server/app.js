@@ -2,6 +2,7 @@
 require('dotenv').config();
 const express = require('express');
 const session = require('express-session');
+const MongoStore = require('connect-mongo')(session);
 const cors = require('cors');
 const passport = require('passport');
 
@@ -16,14 +17,15 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // set up express session
+const dbconn = require('./config/database');
 app.use(
   session({
     secret: process.env.SESS_SECRET,
     saveUninitialized: true,
     resave: false,
-    store: new session.MemoryStore(), // TODO: only for testing
+    store: new MongoStore({ mongooseConnection: dbconn }),
     cookie: {
-      secure: process.env.DEV ? false : true,
+      secure: process.env.DEBUG ? false : true,
       maxAge: 1000 * 60 * 60 * 24 // 1 day in milliseconds
     }
   })

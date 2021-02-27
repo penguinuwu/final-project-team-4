@@ -9,22 +9,22 @@ const Signout = () => {
   // this works like componentDidMount()
   useEffect(() => {
     const reqSignout = async () => {
+      setUser(false);
       try {
         await axios({
           method: 'post',
           url: `${process.env.REACT_APP_API}/signout`,
           withCredentials: true
         });
-
         // authorization success
         setStatus('You have signed out!');
-        setUser(false);
       } catch (err) {
         if (err && err.response && err.response.data)
           setStatus(err.response.data);
       }
     };
     reqSignout();
+    // eslint-disable-next-line
   }, []);
 
   return (

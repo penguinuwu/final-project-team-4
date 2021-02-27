@@ -14,6 +14,7 @@ const Games = () => {
               <a href='/games'>
                 {obj.video ? (
                   <iframe
+                    title='Video'
                     className='responsive-iframe card-img-top img-fluid'
                     src={`${obj.image}`}
                   ></iframe>

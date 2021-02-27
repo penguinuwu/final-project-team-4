@@ -18,7 +18,7 @@ const FriendsList = () => {
   return (
     <div className='pt-3 mx-0 px-0 mx-md-2 px-md-1 mx-lg-5 px-lg-5'>
       {Friends.map((friend) => (
-        <div className='card mx-5 mb-4 p-3 bg-purple'>
+        <div className='card mx-5 mb-4 p-3 bg-purple' key={friend.username}>
           <div className='row'>
             <div className='col-12 col-md-4 col-lg-3 video-hover my-auto'>
               <a href='/user'>
@@ -39,7 +39,10 @@ const FriendsList = () => {
                 Common Games:{' '}
                 <ul className='list-inline'>
                   {friend.common_games.map((game) => (
-                    <li className='list-inline-item btn-info btn-sm'>
+                    <li
+                      className='list-inline-item btn-info btn-sm'
+                      key={game}
+                    >
                       {game}
                     </li>
                   ))}
