@@ -1,14 +1,11 @@
-const { ObjectId } = require('mongoose').Types;
 const User = require('../models/user');
 const Queue = require('../models/queue');
+const Game = require('../models/game');
 
 const getQueue = async (req, res) => {
   // force game name to be a string
   let query = {};
   if (req.body.gameID) query.game = `${req.body.gameID}`;
-
-  // convert string to ObjectId for future reference
-  // let gameID = req.body.gameID ? ObjectId(`${req.body.gameID}`) : null;
 
   try {
     // find all queues
@@ -25,14 +22,19 @@ const getQueue = async (req, res) => {
       // query for user for username
       let user = await User.findById(`${row.user}`);
 
-      const reqUserGame = req.user.games.find((x) => x.game.equals(row.game));
-      const userGame = user.games.find((x) => x.game.equals(row.game));
-      if (userGame.rank !== reqUserGame.rank) continue;
+      // const reqUserGame = req.user.games.find((x) => x.game.equals(row.game));
+      // const userGame = user.games.find((x) => x.game.equals(row.game));
+      // if (!reqUserGame || !userGame || userGame.rank !== reqUserGame.rank)
+      //   continue;
+      const userGame = {}; // TODO: store games in user profile
+      const game = await Game.findById(row.game);
+      if (!game) continue;
 
       // append to array
       parsedQueues.push({
         id: row.id,
-        game: row.game,
+        gameID: row.game,
+        game: game.game,
         rank: userGame.rank,
         user: user ? user.username : null
       });
@@ -51,21 +53,12 @@ const joinQueue = async (req, res) => {
   if (!req.user.id) return res.status(403).send('Please signin.');
   if (!req.body.gameID) return res.status(400).send('Please pick a game.');
 
-  let gameID = ObjectId(`${req.body.gameID}`);
-
-  // TODO: change this to query games database
-  if (
-    !ObjectId('123456789012').equals(gameID) &&
-    !ObjectId('123456789014').equals(gameID) &&
-    !ObjectId('123456789013').equals(gameID) &&
-    !ObjectId('123456789016').equals(gameID) &&
-    !ObjectId('123456789018').equals(gameID)
-  )
-    return res.status(400).send('Please pick a valid game.');
-
   try {
+    const game = await Game.findById(`${req.body.gameID}`);
+    if (!game) return res.status(400).send('Please pick a valid game.');
+
     await Queue.create({
-      game: gameID,
+      game: game.id,
       user: req.user.id
     });
     return res.status(200).send('You have joined the queue.');

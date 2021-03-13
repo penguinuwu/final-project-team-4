@@ -8,14 +8,14 @@ class Queue extends Component {
     super(props);
     this.state = {
       alert: null,
-      gameID: '',
-      gameIDs: [],
+      game: {},
+      games: [],
       inQueue: false,
       queues: []
     };
 
     this.setQueueState = this.setQueueState.bind(this);
-    this.setGameID = this.setGameID.bind(this);
+    this.setGame = this.setGame.bind(this);
     this.setAlert = this.setAlert.bind(this);
   }
 
@@ -24,32 +24,32 @@ class Queue extends Component {
     if (!this._isMounted) return;
     this.setState({
       alert: this.state.alert,
-      gameID: this.state.gameID,
-      gameIDs: this.state.gameIDs,
+      game: this.state.game,
+      games: this.state.games,
       inQueue: data.inQueue,
       queues: data.queues
     });
   }
 
-  setGameID(id) {
+  setGame(game) {
     // only setstate if component is mounted
     if (!this._isMounted) return;
     this.setState({
       alert: this.state.alert,
-      gameID: id,
-      gameIDs: this.state.gameIDs,
+      game: game,
+      games: this.state.games,
       inQueue: this.state.inQueue,
       queues: this.state.queues
     });
   }
 
-  setGameIDs(ids) {
+  setGames(games) {
     // only setstate if component is mounted
     if (!this._isMounted) return;
     this.setState({
       alert: this.state.alert,
-      gameID: this.state.gameID,
-      gameIDs: ids,
+      game: this.state.game,
+      games: games,
       inQueue: this.state.inQueue,
       queues: this.state.queues
     });
@@ -60,15 +60,15 @@ class Queue extends Component {
     if (!this._isMounted) return;
     this.setState({
       alert: alert,
-      gameID: this.state.gameID,
-      gameIDs: this.state.gameIDs,
+      game: this.state.game,
+      games: this.state.games,
       inQueue: this.state.inQueue,
       queues: this.state.queues
     });
   }
 
   async getQueue(id = null) {
-    let data = id ? { gameID: id } : {};
+    let data = id ? { game: id } : {};
     try {
       let res = await axios({
         method: 'post',
@@ -87,7 +87,7 @@ class Queue extends Component {
       let res = await axios({
         method: 'post',
         url: `${process.env.REACT_APP_API}/joinqueue`,
-        data: { gameID: this.state.gameID },
+        data: { gameID: this.state.game.id },
         withCredentials: true
       });
       this.setAlert(res.data);
@@ -115,11 +115,22 @@ class Queue extends Component {
     this._isMounted = true;
     axios({
       method: 'get',
-      url: `${process.env.REACT_APP_API}/getgames`,
+      url: `${process.env.REACT_APP_API}/getAllGames`,
       withCredentials: true
     })
-      .then((obj) => this.setGameIDs(obj.data.games))
-      .catch((err) => this.setGameIDs([]));
+      .then((obj) => {
+        this.setGames(obj.data.games);
+        if (obj.data.games)
+          this.setGame({
+            id: obj.data.games[0]._id,
+            game: obj.data.games[0].game
+          });
+      })
+      .catch((err) => {
+        this.setGames([]);
+        if (err.response && err.response.data)
+          this.setAlert(err.response.data);
+      });
 
     // get queue every second
     this.interval = setInterval(() => this.getQueue(), 1000);
@@ -128,24 +139,6 @@ class Queue extends Component {
   componentWillUnmount() {
     this._isMounted = false;
     clearInterval(this.interval);
-  }
-
-  // TODO: use api instead of hardcode
-  renderGameName(id) {
-    switch (id) {
-      case '313233343536373839303132':
-        return 'osu!';
-      case '313233343536373839303134':
-        return 'Melee';
-      case '313233343536373839303133':
-        return 'POE';
-      case '313233343536373839303136':
-        return 'CS:GO';
-      case '313233343536373839303138':
-        return 'LoL';
-      default:
-        return 'Choose a game';
-    }
   }
 
   renderJoinLeaveButton() {
@@ -163,17 +156,19 @@ class Queue extends Component {
               className='btn btn-light dropdown-toggle'
               data-bs-toggle='dropdown'
             >
-              {this.renderGameName(this.state.gameID)}
+              {this.state.game.game}
             </button>
             <ul className='dropdown-menu'>
-              {this.state.gameIDs.map((game) => (
+              {this.state.games.map((game) => (
                 <li
-                  key={game.game}
+                  key={game._id}
                   role='button'
                   className='dropdown-item'
-                  onClick={(e) => this.setGameID(game.game)}
+                  onClick={() =>
+                    this.setGame({ id: game._id, game: game.game })
+                  }
                 >
-                  {this.renderGameName(game.game)}
+                  {game.game}
                 </li>
               ))}
             </ul>
@@ -211,7 +206,7 @@ class Queue extends Component {
       <React.Fragment>
         {this.state.queues.map((row) => (
           <tr key={row.id}>
-            <th className='fw-normal'>{this.renderGameName(row.game)}</th>
+            <th className='fw-normal'>{row.game}</th>
             <th className='fw-normal'>{row.user}</th>
             <th className='fw-normal'>{row.rank}</th>
           </tr>

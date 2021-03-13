@@ -10,6 +10,8 @@ import Signin from './Routes/Signin';
 import Signout from './Routes/Signout';
 import Profile from './Routes/Profile';
 import MediaContent from './Routes/MediaContent';
+import GameContent from './Routes/GameContent';
+import MediaUpload from './Routes/MediaUpload';
 
 function getLocalStorage(key, defaultValue) {
   try {
@@ -63,6 +65,8 @@ function App() {
             <Route exact path='/signout' component={Signout} />
             <Route exact path='/profile' component={Profile} />
             <Route exact path='/media/:id' component={MediaContent} />
+            <Route exact path='/game/:id' component={GameContent} />
+            <Route exact path='/upload' component={MediaUpload} />
           </Switch>
         </BrowserRouter>
       </div>

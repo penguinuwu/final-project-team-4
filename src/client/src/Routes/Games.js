@@ -1,39 +1,56 @@
-import React from 'react';
-import { games } from '../tmpGames/GamesList.js';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+
 const Games = () => {
-  const display = (objs) => {
+  const [games, setGames] = useState(null);
+
+  useEffect(() => {
+    axios({
+      method: 'get',
+      url: `${process.env.REACT_APP_API}/getAllGames`,
+      data: {},
+      withCredentials: true
+    })
+      .then((res) => {
+        setGames(res.data.games);
+      })
+      .catch((err) => console.log(err));
+  }, []); // [] to prevent infinite loop
+
+  const display = () => {
+    if (games === null) return;
     return (
       <div className='row'>
-        {objs.map((obj) => (
+        {games.map((game) => (
           <div
             className='col-12 col-sm-6 col-md-4 col-lg-3 p-1'
-            key={JSON.stringify(obj)}
+            key={JSON.stringify(game)}
           >
             {/* card header */}
             <div className='card h-100 bg-dark'>
-              <a href='/games'>
-                {obj.video ? (
+              <a href={`/game/${game._id}`}>
+                {game.video ? (
                   <iframe
                     title='Video'
                     className='responsive-iframe card-img-top img-fluid'
-                    src={`${obj.image}`}
+                    src={`${game.image}`}
                   ></iframe>
                 ) : (
                   <img
-                    src={`${obj.image}`}
+                    src={`${game.image}`}
                     className='card-img-top img-fluid'
-                    alt={obj.title}
+                    alt={game.game}
                   />
                 )}
               </a>
               {/* card body */}
               <div className='card-body'>
                 <h5 className='card-text text-truncate'>
-                  <a href='/games'>{obj.game}</a>
+                  <a href={`/game/${game._id}`}>{game.game}</a>
                 </h5>
                 <div className='d-flex justify-content-end'></div>
                 <ul className='list-inline'>
-                  {obj.tags.map((tag) => (
+                  {game.tags.map((tag) => (
                     <li
                       className='list-inline-item btn-info btn-sm'
                       key={JSON.stringify(tag)}

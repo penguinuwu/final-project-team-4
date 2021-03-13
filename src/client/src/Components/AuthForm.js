@@ -27,19 +27,6 @@ const AuthForm = (props) => {
       {/* card header title */}
       <h2 className='card-header'>{props.headerText}</h2>
       <div className='card-body text-center px-3 my-1'>
-        {/* username */}
-        <div className='input-group mb-1'>
-          <span className='input-group-text btn-warning'>
-            <i className='fas fa-user fa-fw'></i>
-          </span>
-          <input
-            type='text'
-            className='form-control'
-            onChange={(e) => props.setUsername(e.target.value)}
-            placeholder='Username'
-          ></input>
-        </div>
-
         {/* email */}
         <div className='input-group mb-1'>
           <span className='input-group-text btn-warning'>
@@ -50,6 +37,23 @@ const AuthForm = (props) => {
             className='form-control'
             onChange={(e) => props.setEmail(e.target.value)}
             placeholder='Email'
+            type='email'
+            autocomplete='on'
+          ></input>
+        </div>
+
+        {/* username */}
+        <div className='input-group mb-1'>
+          <span className='input-group-text btn-warning'>
+            <i className='fas fa-user fa-fw'></i>
+          </span>
+          <input
+            type='text'
+            className='form-control'
+            onChange={(e) => props.setUsername(e.target.value)}
+            placeholder='Username'
+            name='username'
+            autocomplete='on'
           ></input>
         </div>
 
@@ -63,6 +67,8 @@ const AuthForm = (props) => {
             className='form-control'
             onChange={(e) => props.setPassword(e.target.value)}
             placeholder='Password'
+            name='password'
+            autocomplete='on'
           ></input>
         </div>
 

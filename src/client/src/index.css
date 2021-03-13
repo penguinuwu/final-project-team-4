@@ -71,3 +71,16 @@ a:hover {
 .border-purple {
   border-color: rgb(85, 76, 99);
 }
+
+.checked {
+  color: orange;
+}
+
+.cover {
+  height: 25vw;
+  object-fit: cover;
+}
+
+textarea {
+  resize: none;
+}

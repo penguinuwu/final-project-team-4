@@ -1,5 +1,6 @@
 const router = require('express').Router();
 const API_URL = process.env.API_URL;
+const upload = require('../config/multer');
 
 // testing routes
 if (process.env.DEBUG) {
@@ -16,11 +17,7 @@ if (process.env.DEBUG) {
 }
 
 // authentication-related routes
-const check = require('./check');
-const session = require('./session');
-const signup = require('./signup');
-const signin = require('./signin');
-const signout = require('./signout');
+const { check, session, signup, signin, signout } = require('./auth');
 router.post(`${API_URL}/session`, [check, session]);
 router.post(`${API_URL}/signup`, signup);
 router.post(`${API_URL}/signin`, signin);
@@ -49,5 +46,18 @@ router.get(`${API_URL}/getUserDetails`, [check, getUserDetails]);
 router.post(`${API_URL}/updateImage`, [check, updateImage]);
 router.post(`${API_URL}/updaterank`, [check, updateRank]);
 router.get(`${API_URL}/getgames`, [check, getGames]);
+
+const { getPost, updateLikes, getAllPosts, uploadData } = require('./media');
+router.get(`${API_URL}/getPost`, getPost);
+router.post(`${API_URL}/updateLikes`, [check, updateLikes]);
+router.get(`${API_URL}/getAllPosts`, getAllPosts);
+router.post(`${API_URL}/upload`, [check, upload.single('image'), uploadData]);
+
+// Game related routes
+const { postGame, getGameDetails, getAllGames, setRating } = require('./game');
+router.post(`${API_URL}/postGame`, [check, postGame]);
+router.post(`${API_URL}/setRating`, [check, setRating]);
+router.get(`${API_URL}/getGameDetails/:id`, getGameDetails);
+router.get(`${API_URL}/getAllGames`, getAllGames);
 
 module.exports = router;
