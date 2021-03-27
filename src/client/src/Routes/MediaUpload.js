@@ -48,7 +48,7 @@ const MediaUpload = () => {
       data: form,
       withCredentials: true
     })
-      .then((res) => setStatus(`Success! ${res.data.mediaID}`))
+      .then((res) => setStatus(res.data.mediaID))
       .catch((e) => {
         if (e && e.response) setStatus(e.response.data);
       });
@@ -193,7 +193,11 @@ const MediaUpload = () => {
       {status ? (
         <React.Fragment>
           <hr />
-          <p>{status}</p>
+          <p>
+            <a
+              href={`/media/${status}`}
+            >{`Nice, click here to see your post!`}</a>
+          </p>
         </React.Fragment>
       ) : null}
     </React.Fragment>

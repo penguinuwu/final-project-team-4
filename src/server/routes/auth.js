@@ -1,6 +1,5 @@
 const passport = require('passport');
 const bcrypt = require('bcryptjs');
-const { ObjectId } = require('mongoose').Types;
 const User = require('../models/user');
 
 const check = (req, res, next) => {
@@ -14,6 +13,12 @@ const session = (req, res) => {
   if (req.user && req.user.username)
     return res.status(200).send(req.user.username);
   return res.status(403).send('Not signed in.');
+};
+
+const generatePassword = (password) => {
+  // generate salt and hash
+  let salt = bcrypt.genSaltSync(10);
+  return bcrypt.hashSync(password, salt);
 };
 
 const signup = async (req, res) => {
@@ -34,8 +39,7 @@ const signup = async (req, res) => {
       return res.status(401).send('Username has already been taken');
 
     // generate salt and hash
-    let salt = bcrypt.genSaltSync(10);
-    let hash = bcrypt.hashSync(password, salt);
+    let hash = generatePassword(password);
 
     // create new user
     let newUser = new User({
@@ -47,11 +51,12 @@ const signup = async (req, res) => {
         friendly: 0,
         knowledgeable: 0
       },
-      games: [
-        // TODO: set this to empty
-        { game: ObjectId('604ac3a539782490357d7f99'), rank: 'Gold', hours: 1 },
-        { game: ObjectId('604ac61339782490357d7f9b'), rank: 'Pog', hours: 69 }
-      ],
+      commendedBy: {
+        skillful: [],
+        friendly: [],
+        knowledgeable: []
+      },
+      games: [],
       media: [],
       friends: [],
       blacklist: []
@@ -79,7 +84,7 @@ const signin = (req, res, next) => {
     // use passport to login
     req.logIn(user, (err) => {
       if (err) return next(err);
-      return res.status(200).send(user.username);
+      return res.status(200).send({ id: user._id, username: user.username });
     });
   })(req, res, next);
 };
@@ -94,6 +99,7 @@ const signout = (req, res) => {
 };
 
 module.exports = {
+  generatePassword: generatePassword,
   check: check,
   session: session,
   signup: signup,

@@ -7,14 +7,39 @@ const Community = () => {
   const [videos, setVideos] = useState([]);
   const [textPosts, setTextPosts] = useState([]);
   const user = useContext(UserContext);
+  const [search, setSearch] = useState('');
+  const sortMethods = {
+    'likes-descending': (
+      <React.Fragment>
+        <i className='fas fa-sort-amount-up'></i> Sort by Rating: Best First
+      </React.Fragment>
+    ),
+    'likes-ascending': (
+      <React.Fragment>
+        <i className='fas fa-sort-amount-down'></i> Sort by Rating: Best Last
+      </React.Fragment>
+    ),
+    'title-ascending': (
+      <React.Fragment>
+        <i className='fas fa-sort-alpha-up'></i> Sort by Title: A-Z
+      </React.Fragment>
+    ),
+    'title-descending': (
+      <React.Fragment>
+        <i className='fas fa-sort-alpha-down'></i> Sort by Title: Z-A
+      </React.Fragment>
+    )
+  };
+  const [sort, setSort] = useState(Object.keys(sortMethods)[0]);
 
   // horrible practice but quick fix
   const [, forceUpdate] = useReducer((x) => x + 1, 0);
 
-  useEffect(() => {
+  const getPosts = () => {
     axios({
       method: 'get',
       url: `${process.env.REACT_APP_API}/getAllPosts`,
+      headers: { search: search, sort: sort },
       withCredentials: true
     })
       .then((res) => {
@@ -23,9 +48,13 @@ const Community = () => {
         setTextPosts(res.data.texts);
       })
       .catch((err) => console.log(err));
-  }, []);
+  };
 
-  // Janky, needs fixing
+  useEffect(() => {
+    getPosts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sort]);
+
   const like = async (index, type) => {
     // send update likes request
     if (type === 'screenshot') {
@@ -134,16 +163,21 @@ const Community = () => {
                   <a href={`/game/${obj.gameID}`}>{obj.gameName}</a>
                 </h5>
                 <p className='card-text text-truncate'>
-                  Uploaded by{' '}
+                  Posted by{' '}
                   <a href={`/profile/${obj.authorID}`}>@{obj.authorName}</a>
                 </p>
                 <div className='d-flex justify-content-end'></div>
                 <ul className='list-inline'>
-                  {obj.tags.map((tag) => (
-                    <li className='list-inline-item btn-info btn-sm' key={tag}>
-                      {tag}
-                    </li>
-                  ))}
+                  {obj.tags
+                    .filter((tag) => `${tag}`.length > 0)
+                    .map((tag) => (
+                      <li
+                        className='list-inline-item btn-info btn-sm'
+                        key={tag}
+                      >
+                        {tag}
+                      </li>
+                    ))}
                 </ul>
               </div>
             </div>
@@ -166,8 +200,13 @@ const Community = () => {
               type='text'
               className='form-control'
               placeholder='Filter by'
+              onChange={(e) => setSearch(e.target.value)}
             />
-            <button className='btn btn-outline-success' type='button'>
+            <button
+              className='btn btn-outline-success'
+              type='button'
+              onClick={getPosts}
+            >
               <i className='fas fa-search'></i>
             </button>
           </div>
@@ -188,21 +227,22 @@ const Community = () => {
             data-bs-toggle='dropdown'
             aria-expanded='false'
           >
-            Sort by Name
+            {sortMethods[sort]}
           </button>
           <ul
             className='dropdown-menu bg-secondary'
             aria-labelledby='dropdownMenuButton'
           >
-            <li className='dropdown-item'>
-              <i className='fas fa-sort-alpha-up' /> Sort by Name: A-Z
-            </li>
-            <li className='dropdown-item'>
-              <i className='fas fa-sort-alpha-down' /> Sort by Name: Z-A
-            </li>
-            <li className='dropdown-item'>
-              <i className='fas fa-sort-amount-down-alt' /> Sort by Rating
-            </li>
+            {Object.keys(sortMethods).map((k) => (
+              <li
+                className='dropdown-item'
+                key={k}
+                type='button'
+                onClick={() => setSort(k)}
+              >
+                {sortMethods[k]}
+              </li>
+            ))}
           </ul>
         </div>
       </div>

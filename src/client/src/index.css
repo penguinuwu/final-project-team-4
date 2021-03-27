@@ -21,8 +21,9 @@ a:hover {
 }
 
 .avatar {
-  max-width: 15rem;
-  height: auto;
+  width: 15rem;
+  height: 15rem;
+  object-fit: cover;
   border: solid 1px;
   margin-bottom: 10px;
 }

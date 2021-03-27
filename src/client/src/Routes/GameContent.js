@@ -12,7 +12,7 @@ const GameContent = () => {
   const [averageRating, setAverageRating] = useState(null);
   const [media, setMedia] = useState(null);
   const [userRating, setUserRating] = useState(null);
-  const [userFavourite, setUserFavourite] = useState(null);
+  const [userFavorite, setUserFavorite] = useState(null);
   const { user } = useContext(UserContext);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -32,6 +32,7 @@ const GameContent = () => {
         setAverageRating(res.data.averageRating);
         setMedia(res.data.media);
         setUserRating(res.data.userRating);
+        setUserFavorite(res.data.favorite);
       })
       .catch((err) => console.log(err));
   };
@@ -102,6 +103,24 @@ const GameContent = () => {
     );
   };
 
+  const updateFavorite = async () => {
+    try {
+      let res = await axios({
+        method: 'post',
+        url: `${process.env.REACT_APP_API}/updateFavorite`,
+        data: {
+          gameID: id
+        },
+        withCredentials: true
+      });
+      if (res && 'favorited' in res.data) {
+        setUserFavorite(res.data.favorited);
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <div className='container-fluid'>
       <h2 className='text-center'>{game}</h2>
@@ -147,14 +166,16 @@ const GameContent = () => {
                 </a>
               </div>
               <div className='col-12 col-md-4'>
+                {userFavorite != null ? (
                 <button
-                  className='btn btn-primary btn-lg m-1'
-                  onClick={() => setUserFavourite(!userFavourite)}
+                  className={'btn btn-primary btn-lg m-1' + (!user ? ' disabled' : '')}
+                  onClick={() => updateFavorite()}
                 >
                   <p className='p-2 m-0'>
-                    {userFavourite ? 'Unfavorite' : 'Favorite'}
+                    {userFavorite ? 'Unfavorite' : 'Favorite'}
                   </p>
                 </button>
+                ) : null}
               </div>
               <div className='col-12 col-md-4'>
                 <h4>Rate This Game</h4>

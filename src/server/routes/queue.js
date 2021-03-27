@@ -1,3 +1,4 @@
+const { isValidObjectId } = require('mongoose');
 const User = require('../models/user');
 const Queue = require('../models/queue');
 const Game = require('../models/game');
@@ -5,7 +6,8 @@ const Game = require('../models/game');
 const getQueue = async (req, res) => {
   // force game name to be a string
   let query = {};
-  if (req.body.gameID) query.game = `${req.body.gameID}`;
+  if (isValidObjectId(`${req.headers.gameid}`))
+    query.game = `${req.headers.gameid}`;
 
   try {
     // find all queues
@@ -22,20 +24,39 @@ const getQueue = async (req, res) => {
       // query for user for username
       let user = await User.findById(`${row.user}`);
 
-      // const reqUserGame = req.user.games.find((x) => x.game.equals(row.game));
-      // const userGame = user.games.find((x) => x.game.equals(row.game));
-      // if (!reqUserGame || !userGame || userGame.rank !== reqUserGame.rank)
-      //   continue;
-      const userGame = {}; // TODO: store games in user profile
+      // ignore queue if the host blocked current user.
+      if (req.user && user.blacklist.includes(`${req.user.id}`)) continue;
+
+      const userGame = user.games.find((x) => x.game.equals(row.game));
       const game = await Game.findById(row.game);
       if (!game) continue;
+
+      let reqUserGame = null;
+      if (req.headers.filter)
+        reqUserGame = req.user.games.find((x) => x.game.equals(row.game));
+
+      // queue filters
+      switch (req.headers.filter) {
+        case 'match-rank':
+          if (!reqUserGame || !userGame || userGame.rank !== reqUserGame.rank)
+            continue;
+        case 'less-exp':
+          if (!reqUserGame || !userGame || userGame.hours >= reqUserGame.hours)
+            continue;
+        case 'more-exp':
+          if (!reqUserGame || !userGame || userGame.hours < reqUserGame.hours)
+            continue;
+        default:
+          break;
+      }
 
       // append to array
       parsedQueues.push({
         id: row.id,
         gameID: row.game,
         game: game.game,
-        rank: userGame.rank,
+        rank: userGame ? userGame.rank : 'Not Set',
+        userID: user ? user.id : null,
         user: user ? user.username : null
       });
     }

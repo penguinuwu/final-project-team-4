@@ -1,6 +1,7 @@
 const Game = require('../models/game');
 const Post = require('../models/posts');
-const { getPostData } = require('./media')
+const UserModel = require('../models/user');
+const { getPostData } = require('./media');
 
 const postGame = async (req, res) => {
   try {
@@ -31,7 +32,72 @@ const postGame = async (req, res) => {
 
 const getAllGames = async (req, res) => {
   try {
-    const games = await Game.find();
+    let search = { $regex: new RegExp(''), $options: 'i' };
+    if (req.headers.search)
+      search.$regex = new RegExp(`${req.headers.search}`);
+
+    let sort = {};
+    switch (req.headers.sort) {
+      case 'game-ascending':
+        sort = { game: 1 };
+        break;
+      case 'game-descending':
+        sort = { game: -1 };
+        break;
+      case 'reviews-ascending':
+        sort = { revs: 1 };
+        break;
+      case 'reviews-descending':
+        sort = { revs: -1 };
+        break;
+      default:
+        // by default, sort games ascending
+        sort = { game: 1 };
+        break;
+    }
+
+    const games = await Game.aggregate([
+      {
+        $project: {
+          game: 1,
+          description: 1,
+          tags: 1,
+          image: 1,
+          media: 1,
+          video: 1,
+          reviews: 1,
+          revs: {
+            $cond: {
+              if: { $eq: ['$reviews', {}] },
+              then: { default: 0 },
+              else: { $objectToArray: '$reviews' }
+            }
+          }
+        }
+      },
+      { $unwind: '$revs' },
+      {
+        $group: {
+          _id: '$_id',
+          game: { $first: '$game' },
+          description: { $first: '$description' },
+          tags: { $first: '$tags' },
+          image: { $first: '$image' },
+          media: { $first: '$media' },
+          video: { $first: '$video' },
+          reviews: { $first: '$reviews' },
+          revs: { $avg: '$revs.v' }
+        }
+      },
+      {
+        $match: {
+          $or: [{ game: search }, { description: search }, { tags: search }]
+        }
+      }
+    ])
+      .collation({ locale: 'en' })
+      .sort(sort);
+
     return res.status(200).send({ games });
   } catch (error) {
     console.log(error);
@@ -51,12 +117,24 @@ const getGameDetails = async (req, res) => {
       if (postData) media.push(postData);
     }
 
+    let isFavorite = false;
+    if (req.isAuthenticated()) {
+      const user = await UserModel.findById(req.user.id);
+      // Check games list to see if the "id" is in it
+      if (
+        user.games.filter((game) => game.game.toString() === id).length > 0
+      ) {
+        isFavorite = true;
+      }
+    }
+
     return res.status(200).send({
       game: game.game,
       image: game.image,
       description: game.description,
       averageRating,
       userRating,
+      favorite: isFavorite,
       media
     });
   } catch (error) {

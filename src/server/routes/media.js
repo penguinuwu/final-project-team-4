@@ -1,8 +1,7 @@
 const PostModel = require('../models/posts');
 const UserModel = require('../models/user');
-const Game = require('../models/game');
-
-const validTypes = ['image/png', 'image/jpeg', 'image/gif'];
+const GameModel = require('../models/game');
+const { isValidImage } = require('../config/multer');
 
 const getPostData = async (req, post) => {
   // ignore posts with empty content
@@ -12,8 +11,11 @@ const getPostData = async (req, post) => {
   const user = await UserModel.findById(post.author);
   if (!user) return null;
 
+  // ignore posts if the author blocked current user
+  if (req.user && user.blacklist.includes(`${req.user.id}`)) return null;
+
   // ignore posts with non-existant games
-  const game = await Game.findById(post.game);
+  const game = await GameModel.findById(post.game);
   if (!game) return null;
 
   // get basic data
@@ -35,10 +37,7 @@ const getPostData = async (req, post) => {
   switch (post.type) {
     case 'screenshot':
       // convert screenshot data to base64
-      if (
-        !post.screenshot.data ||
-        !validTypes.includes(post.screenshot.contentType)
-      )
+      if (!post.screenshot.data || !isValidImage(post.screenshot.contentType))
         return null;
       let b64 = Buffer.from(post.screenshot.data).toString('base64');
       data.screenshot = `data:${post.screenshot.contentType};base64,${b64}`;
@@ -103,7 +102,36 @@ const getAllPosts = async (req, res) => {
   };
 
   try {
-    for (const post of await PostModel.find()) {
+    let search = { $regex: new RegExp(''), $options: 'i' };
+    if (req.headers.search)
+      search.$regex = new RegExp(`${req.headers.search}`);
+
+    let sort = {};
+    switch (req.headers.sort) {
+      case 'title-ascending':
+        sort = { title: 1 };
+        break;
+      case 'title-descending':
+        sort = { title: -1 };
+        break;
+      case 'likes-ascending':
+        sort = { likes: 1 };
+        break;
+      case 'likes-descending':
+        sort = { likes: -1 };
+        break;
+      default:
+        // by default, sort games ascending
+        sort = { likes: -1 };
+        break;
+    }
+
+    let posts = await PostModel.find({
+      $or: [{ title: search }, { tags: search }]
+    })
+      .collation({ locale: 'en' })
+      .sort(sort);
+    for (const post of posts) {
       try {
         let postData = await getPostData(req, post);
         if (!postData) continue; // check if post is valid
@@ -127,7 +155,7 @@ const uploadData = async (req, res) => {
   // validate game id
   let game = null;
   try {
-    game = await Game.findById(`${req.body.gameID}`);
+    game = await GameModel.findById(`${req.body.gameID}`);
   } catch (error) {
     return res.status(400).send('Invalid Game ID.');
   }
@@ -140,14 +168,17 @@ const uploadData = async (req, res) => {
     game: game.id,
     created: Date.now(),
     likes: 0,
-    tags: `${req.body.tags}`.split(',').map((t) => t.trim())
+    tags: `${req.body.tags}`
+      .split(',')
+      .map((t) => t.trim())
+      .filter((t) => t.length > 0)
   };
 
   // handle different post types
   switch (`${req.body.type}`) {
     case 'screenshot':
       if (!req.file) return res.status(400).send('No image uploaded.');
-      if (!validTypes.includes(req.file.mimetype))
+      if (!isValidImage(req.file.mimetype))
         return res.status(400).send('Invalid image.');
       post.type = 'screenshot';
       post.screenshot = {
@@ -188,7 +219,42 @@ const uploadData = async (req, res) => {
     let newPost = await PostModel.create(post);
     game.media.push(newPost.id);
     await game.save();
+
+    // Append to user's media list
+    let user = await UserModel.findById(req.user.id);
+    user.media.push(newPost.id);
+    await user.save();
+
     return res.status(200).send({ mediaID: newPost.id });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send('Internal Server Error');
+  }
+};
+
+const deleteMedia = async (req, res) => {
+  try {
+    // verify user is author of the post
+    let user = await UserModel.findById(req.user.id);
+    const result = user.media.find(
+      (post) => post.toString() === req.body.mediaID
+    );
+    if (!result) {
+      return res.status(403).send('User is not the author of the post');
+    }
+
+    await PostModel.findByIdAndDelete(req.body.mediaID);
+
+    user.media = user.media.filter(
+      (post) => post.toString() !== req.body.mediaID
+    );
+
+    let game = await GameModel.findById(req.body.gameID);
+    game.media = game.media.filter(
+      (post) => post.toString() !== req.body.mediaID
+    );
+
+    return res.status(200).send({ deleted: req.body.mediaID });
   } catch (error) {
     console.log(error);
     return res.status(500).send('Internal Server Error');
@@ -200,5 +266,6 @@ module.exports = {
   getPost: getPost,
   getAllPosts: getAllPosts,
   updateLikes: updateLikes,
-  uploadData: uploadData
+  uploadData: uploadData,
+  deleteMedia: deleteMedia
 };

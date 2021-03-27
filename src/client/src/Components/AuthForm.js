@@ -37,7 +37,6 @@ const AuthForm = (props) => {
             className='form-control'
             onChange={(e) => props.setEmail(e.target.value)}
             placeholder='Email'
-            type='email'
             autocomplete='on'
           ></input>
         </div>

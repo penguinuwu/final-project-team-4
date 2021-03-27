@@ -6,8 +6,31 @@ class Queue extends Component {
 
   constructor(props) {
     super(props);
+    this.filters = {
+      'no-filter': (
+        <React.Fragment>
+          <i className='fas fa-ban'></i> No Filters
+        </React.Fragment>
+      ),
+      'match-rank': (
+        <React.Fragment>
+          <i className='fas fa-medal'></i> Same Rank
+        </React.Fragment>
+      ),
+      'less-exp': (
+        <React.Fragment>
+          <i className='fas fa-sort-amount-down'></i> Less Experience
+        </React.Fragment>
+      ),
+      'more-exp': (
+        <React.Fragment>
+          <i className='fas fa-sort-amount-up'></i> More Experience
+        </React.Fragment>
+      )
+    };
     this.state = {
       alert: null,
+      filter: Object.keys(this.filters)[0],
       game: {},
       games: [],
       inQueue: false,
@@ -23,9 +46,6 @@ class Queue extends Component {
     // only setstate if component is mounted
     if (!this._isMounted) return;
     this.setState({
-      alert: this.state.alert,
-      game: this.state.game,
-      games: this.state.games,
       inQueue: data.inQueue,
       queues: data.queues
     });
@@ -34,46 +54,33 @@ class Queue extends Component {
   setGame(game) {
     // only setstate if component is mounted
     if (!this._isMounted) return;
-    this.setState({
-      alert: this.state.alert,
-      game: game,
-      games: this.state.games,
-      inQueue: this.state.inQueue,
-      queues: this.state.queues
-    });
+    this.setState({ game: game });
   }
 
   setGames(games) {
     // only setstate if component is mounted
     if (!this._isMounted) return;
-    this.setState({
-      alert: this.state.alert,
-      game: this.state.game,
-      games: games,
-      inQueue: this.state.inQueue,
-      queues: this.state.queues
-    });
+    this.setState({ games: games });
   }
 
   setAlert(alert) {
     // only setstate if component is mounted
     if (!this._isMounted) return;
-    this.setState({
-      alert: alert,
-      game: this.state.game,
-      games: this.state.games,
-      inQueue: this.state.inQueue,
-      queues: this.state.queues
-    });
+    this.setState({ alert: alert });
   }
 
-  async getQueue(id = null) {
-    let data = id ? { game: id } : {};
+  setFilter(filter) {
+    // only setstate if component is mounted
+    if (!this._isMounted) return;
+    this.setState({ filter: filter });
+  }
+
+  async getQueue() {
     try {
       let res = await axios({
-        method: 'post',
+        method: 'get',
         url: `${process.env.REACT_APP_API}/getqueue`,
-        data: data,
+        headers: { gameid: this.state.game.id, filter: this.state.filter },
         withCredentials: true
       });
       this.setQueueState(res.data);
@@ -119,12 +126,15 @@ class Queue extends Component {
       withCredentials: true
     })
       .then((obj) => {
-        this.setGames(obj.data.games);
-        if (obj.data.games)
+        if (obj.data.games) {
+          // add All Games option
+          obj.data.games.unshift({ id: null, game: 'All Games' });
+          this.setGames(obj.data.games);
           this.setGame({
             id: obj.data.games[0]._id,
             game: obj.data.games[0].game
           });
+        }
       })
       .catch((err) => {
         this.setGames([]);
@@ -144,7 +154,7 @@ class Queue extends Component {
   renderJoinLeaveButton() {
     if (this.state.inQueue) {
       return (
-        <button className='btn btn-success' onClick={(e) => this.leaveQueue()}>
+        <button className='btn btn-success' onClick={() => this.leaveQueue()}>
           Leave Queue
         </button>
       );
@@ -161,7 +171,7 @@ class Queue extends Component {
             <ul className='dropdown-menu'>
               {this.state.games.map((game) => (
                 <li
-                  key={game._id}
+                  key={`${game._id}`}
                   role='button'
                   className='dropdown-item'
                   onClick={() =>
@@ -173,10 +183,7 @@ class Queue extends Component {
               ))}
             </ul>
           </div>
-          <button
-            className='btn btn-success'
-            onClick={(e) => this.joinQueue()}
-          >
+          <button className='btn btn-success' onClick={() => this.joinQueue()}>
             Join Queue
           </button>
         </React.Fragment>
@@ -206,8 +213,12 @@ class Queue extends Component {
       <React.Fragment>
         {this.state.queues.map((row) => (
           <tr key={row.id}>
-            <th className='fw-normal'>{row.game}</th>
-            <th className='fw-normal'>{row.user}</th>
+            <th className='fw-normal'>
+              <a href={`/game/${row.gameID}`}>{row.game}</a>
+            </th>
+            <th className='fw-normal'>
+              <a href={`/profile/${row.userID}`}>{row.user}</a>
+            </th>
             <th className='fw-normal'>{row.rank}</th>
           </tr>
         ))}
@@ -263,21 +274,22 @@ class Queue extends Component {
               data-bs-toggle='dropdown'
               aria-expanded='false'
             >
-              Sort by Name
+              {this.filters[this.state.filter]}
             </button>
             <ul
               className='dropdown-menu bg-secondary'
               aria-labelledby='dropdownMenuButton'
             >
-              <li className='dropdown-item'>
-                <i className='fas fa-sort-alpha-up' /> Sort by Name: A-Z
-              </li>
-              <li className='dropdown-item'>
-                <i className='fas fa-sort-alpha-down' /> Sort by Name: Z-A
-              </li>
-              <li className='dropdown-item'>
-                <i className='fas fa-sort-amount-down-alt' /> Sort by Rating
-              </li>
+              {Object.keys(this.filters).map((k) => (
+                <li
+                  className='dropdown-item'
+                  key={k}
+                  onClick={() => this.setFilter(k)}
+                  type='button'
+                >
+                  {this.filters[k]}
+                </li>
+              ))}
             </ul>
           </div>
         </div>
@@ -287,7 +299,7 @@ class Queue extends Component {
           <div className='ms-auto'>
             <button
               className='btn btn-primary me-1'
-              onClick={(e) => this.getQueue()}
+              onClick={() => this.getQueue()}
             >
               Refresh <i className='fas fa-sync-alt'></i>
             </button>

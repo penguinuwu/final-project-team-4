@@ -3,19 +3,46 @@ import axios from 'axios';
 
 const Games = () => {
   const [games, setGames] = useState(null);
+  const [search, setSearch] = useState('');
+  const sortMethods = {
+    'game-ascending': (
+      <React.Fragment>
+        <i className='fas fa-sort-alpha-up'></i> Sort by Name: A-Z
+      </React.Fragment>
+    ),
+    'game-descending': (
+      <React.Fragment>
+        <i className='fas fa-sort-alpha-down'></i> Sort by Name: Z-A
+      </React.Fragment>
+    ),
+    'reviews-descending': (
+      <React.Fragment>
+        <i className='fas fa-sort-amount-up'></i> Sort by Rating: Best First
+      </React.Fragment>
+    ),
+    'reviews-ascending': (
+      <React.Fragment>
+        <i className='fas fa-sort-amount-down'></i> Sort by Rating: Best Last
+      </React.Fragment>
+    )
+  };
+  const [sort, setSort] = useState(Object.keys(sortMethods)[0]);
 
-  useEffect(() => {
+  function getGames() {
     axios({
       method: 'get',
       url: `${process.env.REACT_APP_API}/getAllGames`,
-      data: {},
+      headers: { search: search, sort: sort },
       withCredentials: true
     })
-      .then((res) => {
-        setGames(res.data.games);
-      })
+      .then((res) => setGames(res.data.games))
       .catch((err) => console.log(err));
-  }, []); // [] to prevent infinite loop
+  }
+
+  useEffect(() => {
+    getGames();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sort]);
 
   const display = () => {
     if (games === null) return;
@@ -79,8 +106,13 @@ const Games = () => {
                   type='search'
                   className='form-control'
                   placeholder='Filter by'
+                  onChange={(e) => setSearch(e.target.value)}
                 />
-                <button className='btn btn-outline-success' type='button'>
+                <button
+                  className='btn btn-outline-success'
+                  type='button'
+                  onClick={getGames}
+                >
                   <i className='fas fa-search'></i>
                 </button>
               </form>
@@ -94,21 +126,22 @@ const Games = () => {
               data-bs-toggle='dropdown'
               aria-expanded='false'
             >
-              Sort by Name
+              {sortMethods[sort]}
             </button>
             <ul
               className='dropdown-menu bg-secondary'
               aria-labelledby='dropdownMenuButton'
             >
-              <li className='dropdown-item'>
-                <i className='fas fa-sort-alpha-up' /> Sort by Name: A-Z
-              </li>
-              <li className='dropdown-item'>
-                <i className='fas fa-sort-alpha-down' /> Sort by Name: Z-A
-              </li>
-              <li className='dropdown-item'>
-                <i className='fas fa-sort-amount-down-alt' /> Sort by Rating
-              </li>
+              {Object.keys(sortMethods).map((k) => (
+                <li
+                  className='dropdown-item'
+                  key={k}
+                  type='button'
+                  onClick={() => setSort(k)}
+                >
+                  {sortMethods[k]}
+                </li>
+              ))}
             </ul>
           </div>
         </div>

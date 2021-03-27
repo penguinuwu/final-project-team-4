@@ -130,7 +130,7 @@ const MediaContent = () => {
                 </p>
               </div>
               <div className='col'>
-                {user.user ? (
+                {user.user.username ? (
                   <button
                     className='btn-primary d-inline rounded'
                     onClick={() => updateLikes()}

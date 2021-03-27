@@ -63,7 +63,7 @@ function App() {
             <Route exact path='/signup' component={Signup} />
             <Route exact path='/signin' component={Signin} />
             <Route exact path='/signout' component={Signout} />
-            <Route exact path='/profile' component={Profile} />
+            <Route exact path='/profile/:id' component={Profile} />
             <Route exact path='/media/:id' component={MediaContent} />
             <Route exact path='/game/:id' component={GameContent} />
             <Route exact path='/upload' component={MediaUpload} />

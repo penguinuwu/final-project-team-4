@@ -15,14 +15,14 @@ const Navbar = () => {
             data-bs-toggle='dropdown'
             aria-expanded='false'
           >
-            {user}
+            {user.username}
           </div>
           <ul
             className='dropdown-menu dropdown-menu-end dropdown-menu-dark'
             aria-labelledby='navbarUsDropdown'
           >
             <li>
-              <a className='dropdown-item' href='/profile'>
+              <a className='dropdown-item' href={'/profile/' + user.id}>
                 Profile
               </a>
             </li>
@@ -92,19 +92,6 @@ const Navbar = () => {
               </a>
             </li>
           </ul>
-
-          <div className='d-flex ms-lg-2 me-auto'>
-            <form className='input-group'>
-              <input
-                type='text'
-                className='form-control'
-                placeholder='Search'
-              />
-              <button className='btn btn-outline-warning' type='button'>
-                Search
-              </button>
-            </form>
-          </div>
 
           <ul className='navbar-nav ms-auto'>{renderAuth()}</ul>
         </div>

@@ -35,7 +35,7 @@ app.use(
 app.use(
   cors({
     origin: process.env.APP_URL,
-    methods: 'GET,POST',
+    methods: 'GET,POST,DELETE',
     optionsSuccessStatus: 200,
     credentials: true
   })

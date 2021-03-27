@@ -28,6 +28,11 @@ const UserSchema = new Schema({
     friendly: { type: Number, default: 0 },
     knowledgeable: { type: Number, default: 0 }
   },
+  commendedBy: {
+    skillful: [Schema.Types.ObjectID],
+    friendly: [Schema.Types.ObjectID],
+    knowledgeable: [Schema.Types.ObjectID]
+  },
   games: [
     {
       game: { type: Schema.Types.ObjectID, required: true },
