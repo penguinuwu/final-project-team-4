@@ -6,7 +6,7 @@ const Community = () => {
   const [screenshots, setScreenshots] = useState([]);
   const [videos, setVideos] = useState([]);
   const [textPosts, setTextPosts] = useState([]);
-  const user = useContext(UserContext);
+  const { user } = useContext(UserContext);
   const [search, setSearch] = useState('');
   const sortMethods = {
     'likes-descending': (
