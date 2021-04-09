@@ -6,7 +6,7 @@ const Community = () => {
   const [screenshots, setScreenshots] = useState([]);
   const [videos, setVideos] = useState([]);
   const [textPosts, setTextPosts] = useState([]);
-  const { user } = useContext(UserContext);
+  const user = useContext(UserContext);
   const [search, setSearch] = useState('');
   const sortMethods = {
     'likes-descending': (
@@ -212,7 +212,7 @@ const Community = () => {
           </div>
           <button
             className='ms-3 btn btn-success'
-            disabled={user ? false : true}
+            disabled={user.user ? false : true}
           >
             <a href='/upload'>Upload</a>
           </button>
