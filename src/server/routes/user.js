@@ -8,11 +8,12 @@ const { generatePassword } = require('./auth');
 
 const updateUsername = async (req, res) => {
   try {
-    const user = await UserModel.findById(req.user.id);
-    if (!user) return res.status(404).send('User not found');
+    const newUsername = `${req.body.username}`;
+    const existingUser = await UserModel.findById(newUsername);
+    if (existingUser) return res.status(400).send('Username is taken');
 
-    user.username = req.body.username;
-    const result = await user.save();
+    req.user.username = newUsername;
+    const result = await req.user.save();
     return res.status(200).send(result);
   } catch (error) {
     console.log(error);
