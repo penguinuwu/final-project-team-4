@@ -464,9 +464,9 @@ const getUserFriends = async (req, res) => {
         description: friend.description
       };
 
-      if (isValidImage(user.picture.contentType)) {
-        let b64 = Buffer.from(user.picture.data).toString('base64');
-        friendData.picture = `data:${user.picture.contentType};base64,${b64}`;
+      if (isValidImage(friend.picture.contentType)) {
+        let b64 = Buffer.from(friend.picture.data).toString('base64');
+        friendData.picture = `data:${friend.picture.contentType};base64,${b64}`;
       }
 
       friends.push(friendData);
